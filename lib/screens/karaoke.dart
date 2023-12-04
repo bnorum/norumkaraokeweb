@@ -97,8 +97,8 @@ class KaraokeState extends State<Karaoke> with SingleTickerProviderStateMixin {
       .getModel();
   }
   Future<String> getLyric(Song s) async {
-    return await rootBundle.loadString(s.lyrics);
-    //return File(directory.path + "/" + s.lyrics).readAsString();
+    if (s.lyrics.contains("assets")) return await rootBundle.loadString(s.lyrics);
+    else return File(s.lyrics).readAsString();
   }
 
   
@@ -260,9 +260,8 @@ class KaraokeState extends State<Karaoke> with SingleTickerProviderStateMixin {
               ),
               onPressed: () async {
                 if (audioPlayer == null  && mounted) {
-                  var source = DeviceFileSource(_song.songPath);
-                  if (!_song.songPath.contains("app_flutter")) {audioPlayer = AudioPlayer()..play(AssetSource(_song.songPath)); }
-                  else audioPlayer = AudioPlayer()..play(source);
+                  audioPlayer = AudioPlayer()..play(UrlSource(_song.songPath));
+                  
                   setState(() {
                     playing = true;
                     controlsOpacity = 0;
