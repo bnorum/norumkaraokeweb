@@ -6,12 +6,11 @@ import '../lyricstyle.dart';
 import 'package:flutter/material.dart';
 import 'package:zwidget/zwidget.dart';
 import 'package:flutter_lyric/lyrics_reader.dart';
-import 'package:audioplayers/audioplayers.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:flutter/services.dart' show rootBundle;
-
 import '../nolyricsfound.dart';
-
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:http/http.dart' as http;
 
 
 class Song {
@@ -96,9 +95,9 @@ class KaraokeState extends State<Karaoke> with SingleTickerProviderStateMixin {
       .bindLyricToMain(lyrics)
       .getModel();
   }
+
   Future<String> getLyric(Song s) async {
-    if (s.lyrics.contains("assets")) return await rootBundle.loadString(s.lyrics);
-    else return File(s.lyrics).readAsString();
+    return s.lyrics;
   }
 
   
@@ -126,55 +125,6 @@ class KaraokeState extends State<Karaoke> with SingleTickerProviderStateMixin {
       body: Stack(children: [...buildBG(), buildReaderAndPlay()]));
   }//build
   
-
-  //ascii title stuff:
-  Widget topTitle(String name) {
-    return ZWidget.backwards(
-      midChild:buildASCII(name, const TextStyle( color: Colors.white,fontWeight: FontWeight.bold, fontFeatures: [FontFeature.tabularFigures()]), 'assets/ascii/basic.flf'),
-      midToBotChild: buildASCII(name, const TextStyle( color: Colors.black),'assets/ascii/basic.flf'),
-      rotationX: -pi / 18,
-      layers: 8,
-      depth: 32,
-    );
-  }
-
-  Widget bottomTitle(String name) {
-    return ZWidget.backwards(
-      midChild:buildASCII(name, const TextStyle( color: Colors.red,fontWeight: FontWeight.bold, fontFeatures: [FontFeature.tabularFigures()]), 'assets/ascii/stick_letters.flf'),
-      midToBotChild: buildASCII(name, const TextStyle( color: Colors.black),'assets/ascii/stick_letters.flf'),
-      rotationX: pi / 18,
-      layers: 8,
-      depth: 32,
-    );
-  }
-  Widget titleCard(String playerName, String songName, String artistName) {
-    return Column( 
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children:[
-        topTitle(playerName),
-        const Text('versus', 
-          style:TextStyle(
-            fontSize:18, 
-            color:Colors.white,
-            fontWeight: FontWeight.bold,
-            fontFeatures: [FontFeature.tabularFigures()]
-          ),
-        ),
-        bottomTitle(songName),
-        Text('by ${artistName}', 
-          style:const TextStyle(
-            fontSize:18, 
-            color:Colors.white, 
-            fontWeight: FontWeight.bold
-          )
-        ),
-      ] 
-    );
-  }//titlecard
-  //ascii title stuff
-
-
   List<Widget> buildBG() {
     return [
       Positioned.fill(
@@ -260,34 +210,40 @@ class KaraokeState extends State<Karaoke> with SingleTickerProviderStateMixin {
               ),
               onPressed: () async {
                 if (audioPlayer == null  && mounted) {
-                  audioPlayer = AudioPlayer()..play(UrlSource(_song.songPath));
+                  audioPlayer = AudioPlayer();
+                  audioPlayer?.setUrl(_song.songPath);
+                  audioPlayer?.play();
                   
                   setState(() {
                     playing = true;
                     controlsOpacity = 0;
+                    sliderProgress = audioPlayer!.position.inSeconds.toDouble();
                   });
+                  /*
                   audioPlayer?.onDurationChanged.listen((Duration event) {
                     setState(() {
                       max_value = event.inMilliseconds.toDouble();
                     });
-                  });
-                  audioPlayer?.onPositionChanged.listen((Duration event) {
+                  });*/
+                  audioPlayer?.positionStream.listen((Duration event) {
                     if (isTap) return;
                     setState(() {
                       sliderProgress = event.inMilliseconds.toDouble();
                       playProgress = event.inMilliseconds;
                     });
                   });
-
-                  audioPlayer?.onPlayerStateChanged.listen((PlayerState state) {
+                  
+                  audioPlayer?.playingStream.listen((bool state) {
                     setState(() {
-                      playing = state == PlayerState.playing;
+                      playing = state;
                     });
                   });
+                  
                 } else {
-                  audioPlayer?.resume();
+                  audioPlayer?.play();
                   controlsOpacity = 0;
                 }
+                
               },
               child: Opacity(opacity: controlsOpacity, child:const Text("|>", style: TextStyle(fontWeight:FontWeight.bold ,color: Colors.white)))),
           Container(

@@ -4,7 +4,7 @@ import 'dart:math';
 import 'karaoke.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-
+import 'package:http/http.dart' as http;
 class StartPage extends StatefulWidget {
   const StartPage({Key? key}) : super(key: key);
   @override
@@ -17,9 +17,15 @@ class StartPageState extends State<StartPage> {
   var son= "";
   var rng = new Random();
   
-
+  int randomNum(int n) {
+    if (n == 0) {
+      n = rng.nextInt(999999);
+    }
+    return n;
+  }
+  var code = 0;
   Widget build(BuildContext context) {
-    var code = rng.nextInt(999999); // Move the initialization here
+    code = randomNum(code); // Move the initialization here
 
     return Scaffold(
       appBar: AppBar(
@@ -41,7 +47,8 @@ class StartPageState extends State<StartPage> {
             ),
             ElevatedButton(
               onPressed: () async { 
-                CollectionReference _collectionRef = FirebaseFirestore.instance.collection("420420");
+                print(code.toString());
+                CollectionReference _collectionRef = FirebaseFirestore.instance.collection(code.toString()); //change after testing
                 QuerySnapshot querySnapshot = await _collectionRef.get();
 
                 // Get data from docs and convert map to List
