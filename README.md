@@ -1,4 +1,4 @@
-### norum karaoke ###
+### norum karaoke web ###
 
 This is a web companion for an app I am making for my mobile app development class "CSC-185" at Hofstra University.
 
